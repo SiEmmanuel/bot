@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MKU Student Chatbot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        
+        #chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+            transition: all 0.3s ease;
+            background-color: white;
+        }
+        
+        #chatbot-header {
+            background-color: #1a5276;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        #chatbot-title {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        #chatbot-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        #chatbot-body {
+            height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        
+        #chatbot-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        
+        .bot-message {
+            background-color: #eaf2f8;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+            color: #333;
+        }
+        
+        .user-message {
+            background-color: #1a5276;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+        
+        #chatbot-input {
+            display: flex;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #ddd;
+        }
+        
+        #user-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            font-family: inherit;
+        }
+        
+        #send-button {
+            background-color: #1a5276;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 15px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background-color 0.2s;
+        }
+        
+        #send-button:hover {
+            background-color: #154360;
+        }
+        
+        #chatbot-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #1a5276;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        #chatbot-icon:hover {
+            transform: scale(1.1);
+            background-color: #154360;
+        }
+        
+        #chatbot-icon i {
+            color: white;
+            font-size: 24px;
+        }
+        
+        .quick-reply {
+            display: inline-block;
+            background-color: #eaf2f8;
+            padding: 8px 12px;
+            border-radius: 15px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            border: 1px solid #d4e6f1;
+            transition: all 0.2s ease;
+        }
+        
+        .quick-reply:hover {
+            background-color: #d4e6f1;
+            transform: translateY(-2px);
+        }
+        
+        .options-container {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+        }
+        
+        .continue-options {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        
+        .continue-btn {
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        
+        .continue-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        #continue-chat {
+            background-color: #1a5276;
+            color: white;
+        }
+        
+        #new-chat {
+            background-color: #f8f9fa;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            #chatbot-container {
+                width: 90%;
+                right: 5%;
+                bottom: 10px;
+            }
+            
+            #chatbot-body {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Chatbot Icon -->
+    <div id="chatbot-icon">
+        <i class="fas fa-comment-alt"></i>
+    </div>
+    
+    <!-- Chatbot Container -->
+    <div id="chatbot-container">
+        <div id="chatbot-header">
+            <div id="chatbot-title">MKU Student Assistant</div>
+            <button id="chatbot-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="chatbot-body">
+            <div id="chatbot-messages"></div>
+        </div>
+        <div id="chatbot-input">
+            <input type="text" id="user-input" placeholder="Type your message here..." autocomplete="off">
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const chatbotIcon = document.getElementById('chatbot-icon');
+        const chatbotContainer = document.getElementById('chatbot-container');
+        const chatbotClose = document.getElementById('chatbot-close');
+        const chatbotMessages = document.getElementById('chatbot-messages');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        
+        // Chatbot state
+        let currentContext = null;
+        let previousChats = JSON.parse(localStorage.getItem('mkuchatbot_chats')) || [];
+        let currentSession = [];
+        
+        // Initialize chatbot
+        function initChatbot(startFresh = false) {
+            // Clear the chat interface
+            chatbotMessages.innerHTML = '';
+            
+            if (startFresh || previousChats.length === 0) {
+                // Start fresh conversation
+                previousChats = [];
+                localStorage.removeItem('mkuchatbot_chats');
+                localStorage.removeItem('mkuchatbot_context');
+                currentContext = null;
+                showWelcomeMessage();
+            } else {
+                // Continue from previous chat
+                previousChats.forEach(chat => {
+                    appendMessage(chat.sender, chat.message, false);
+                });
+                
+                // Get the last context
+                currentContext = localStorage.getItem('mkuchatbot_context') || null;
+                
+                // Show appropriate options
+                if (currentContext) {
+                    const options = getContextOptions(currentContext);
+                    showQuickReplies(options);
+                } else {
+                    showQuickReplies(getContextOptions(null));
+                }
+            }
+            
+            // Scroll to bottom
+            scrollToBottom();
+        }
+        
+        // Show welcome message
+        function showWelcomeMessage() {
+            const welcomeMessage = "Hello! Welcome to Mount Kenya University Student Assistant. How can I help you today?";
+            appendMessage('bot', welcomeMessage);
+            showQuickReplies(getContextOptions(null));
+        }
+        
+        // Show continue options when reopening
+        function showContinueOptions() {
+            if (previousChats.length === 0) {
+                initChatbot(true);
+                return;
+            }
+            
+            const optionsDiv = document.createElement('div');
+            optionsDiv.classList.add('continue-options');
+            
+            const continueBtn = document.createElement('button');
+            continueBtn.id = 'continue-chat';
+            continueBtn.classList.add('continue-btn');
+            continueBtn.textContent = 'Continue Previous Chat';
+            continueBtn.addEventListener('click', () => {
+                initChatbot(false);
+            });
+            
+            const newChatBtn = document.createElement('button');
+            newChatBtn.id = 'new-chat';
+            newChatBtn.classList.add('continue-btn');
+            newChatBtn.textContent = 'Start New Chat';
+            newChatBtn.addEventListener('click', () => {
+                initChatbot(true);
+            });
+            
+            optionsDiv.appendChild(continueBtn);
+            optionsDiv.appendChild(newChatBtn);
+            
+            const welcomeMessage = "Welcome back to MKU Student Assistant! Would you like to continue your previous chat or start a new one?";
+            appendMessage('bot', welcomeMessage);
+            chatbotMessages.appendChild(optionsDiv);
+            
+            scrollToBottom();
+        }
+        
+        // Append message to chat
+        function appendMessage(sender, message, saveToHistory = true) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(sender === 'bot' ? 'bot-message' : 'user-message');
+            messageDiv.textContent = message;
+            chatbotMessages.appendChild(messageDiv);
+            
+            // Save to session
+            currentSession.push({ sender, message });
+            
+            // Save to local storage if needed
+            if (saveToHistory && (sender === 'user' || (sender === 'bot' && !message.includes("How can I help")))) {
+                previousChats.push({ sender, message });
+                localStorage.setItem('mkuchatbot_chats', JSON.stringify(previousChats));
+                if (currentContext) {
+                    localStorage.setItem('mkuchatbot_context', currentContext);
+                }
+            }
+            
+            scrollToBottom();
+        }
+        
+        // Show quick reply options
+        function showQuickReplies(options) {
+            const optionsContainer = document.createElement('div');
+            optionsContainer.classList.add('options-container');
+            
+            options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.classList.add('quick-reply');
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', () => {
+                    userInput.value = option;
+                    handleUserInput();
+                });
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            chatbotMessages.appendChild(optionsContainer);
+            scrollToBottom();
+        }
+        
+        // Scroll to bottom of chat
+        function scrollToBottom() {
+            setTimeout(() => {
+                chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+            }, 100);
+        }
+        
+        // Handle user input
+        function handleUserInput() {
+            const message = userInput.value.trim();
+            if (message === '') return;
+            
+            appendMessage('user', message);
+            userInput.value = '';
+            
+            // Process user input and generate response
+            setTimeout(() => {
+                const response = generateResponse(message);
+                appendMessage('bot', response.text);
+                
+                if (response.context !== currentContext) {
+                    currentContext = response.context;
+                    if (currentContext) {
+                        localStorage.setItem('mkuchatbot_context', currentContext);
+                    }
+                }
+                
+                // Show appropriate options
+                const options = getContextOptions(currentContext);
+                if (options && options.length > 0) {
+                    showQuickReplies(options);
+                }
+            }, 500);
+        }
+        
+        // Generate bot response based on user input
+        function generateResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // Main menu options
+            if (lowerMessage.includes('fee') || lowerMessage.includes('payment') || lowerMessage.includes('pay') || 
+                message === "Fees Information") {
+                currentContext = 'fees';
+                return {
+                    text: "For fees information:\n- Fee structure is available at the finance office\n- Payment can be made via MPesa Paybill number 404040, Account Number: Your Registration Number\n- Deadline for semester fees is 2 weeks after registration\n\nWould you like more details about any of these?",
+                    context: 'fees'
+                };
+            }
+            
+            if (message === "Administration") {
+                currentContext = 'administration';
+                return {
+                    text: "Administration services:\n1. Registrar's office - academic records\n2. Dean of students - student welfare\n3. Finance office - fees and payments\n4. Examination office - results\n\nWhich specific service do you need?",
+                    context: 'administration'
+                };
+            }
+            
+            if (message === "Hostels") {
+                currentContext = 'hostels';
+                return {
+                    text: "Hostel information:\n- Application: Online via student portal\n- Fees: Ksh 15,000 standard, Ksh 25,000 premium\n- Allocation: First-come, first-served\n\nWhat would you like to know about hostels?",
+                    context: 'hostels'
+                };
+            }
+            
+            if (message === "Results") {
+                currentContext = 'results';
+                return {
+                    text: "Results services:\n- Published on portal 4 weeks after exams\n- Transcript requests at exam office\n- Rechecking available (Ksh 1,000/paper)\n\nWhat results information do you need?",
+                    context: 'results'
+                };
+            }
+            
+            if (message === "General Information") {
+                currentContext = 'general';
+                return {
+                    text: "General University services:\n1. Library resources\n2. Important contacts\n3. University events\n4. Campus facilities\n\nWhich information are you looking for?",
+                    context: 'general'
+                };
+            }
+            
+            // Fees sub-options
+            if (currentContext === 'fees') {
+                if (message === "Fee payment methods") {
+                    return {
+                        text: "Available payment methods:\n\n1. MPesa:\n   - Paybill: 404040\n   - Account: Your registration number\n   - Minimum: Ksh 100\n\n2. Bank Deposit:\n   - Bank: Kenya Commercial Bank\n   - Account: 123456789\n   - Branch: Thika\n\n3. Online Payment:\n   - Via student portal (Visa/Mastercard)\n\n4. Finance Office:\n   - Cash or cheque payments\n   - Open 8am-4pm weekdays",
+                        context: 'fees'
+                    };
+                }
+                if (message === "Fee deadlines") {
+                    return {
+                        text: "Fee payment deadlines:\n\n- Semester 1: 31st August\n- Semester 2: 31st January\n- Short Semester: 15th June\n\nLate payments:\n- 5% penalty after deadline\n- 10% penalty after 2 weeks\n- Course registration suspended after 1 month",
+                        context: 'fees'
+                    };
+                }
+                if (message === "Fee balances") {
+                    return {
+                        text: "Checking fee balances:\n\n1. Online:\n   - Login to student portal\n   - Go to 'Finance' section\n   - View 'Fee Statement'\n\n2. SMS:\n   - Text 'BAL <RegNo>' to 404040\n\n3. Finance Office:\n   - Request printed statement\n   - Bring student ID\n\nNote: Payments take 24-48 hours to reflect",
+                        context: 'fees'
+                    };
+                }
+            }
+            
+            // Administration sub-options
+            if (currentContext === 'administration') {
+                if (message === "Academic records") {
+                    return {
+                        text: "Academic Records Services:\n\n- Transcript Requests:\n  - Current students: Ksh 500 (3 days)\n  - Alumni: Ksh 1,000 (5 days)\n  - Urgent: Double fee (24 hours)\n\n- Certificate Collection:\n  - After graduation notification\n  - Bring national ID\n  - Authorization letter if collecting for someone\n\n- Verification Requests:\n  - For employers/institutions\n  - Requires written consent",
+                        context: 'administration'
+                    };
+                }
+                if (message === "Student welfare") {
+                    return {
+                        text: "Student Welfare Services:\n\n1. Counseling:\n   - Personal: Monday-Thursday\n   - Career: Fridays\n   - Book appointments online\n\n2. Health Services:\n   - Clinic referrals\n   - NHIF registration\n\n3. Accommodation:\n   - Off-campus housing lists\n   - Landlord mediation\n\n4. Clubs:\n   - Registration of new clubs\n   - Event approvals",
+                        context: 'administration'
+                    };
+                }
+                if (message === "Finance office") {
+                    return {
+                        text: "Finance Office Services:\n\n- Payment Issues:\n  - Receipt processing\n  - Payment verification\n\n- Bursaries:\n  - Application periods: March & September\n  - Requirements: Fee statement, recommendation\n\n- Payment Plans:\n  - Available for balances > Ksh 20,000\n  - 3-month maximum duration\n  - 10% deposit required",
+                        context: 'administration'
+                    };
+                }
+                if (message === "Examination office") {
+                    return {
+                        text: "Examination Office Services:\n\n1. Exam Registration:\n   - Late registration (with penalty)\n   - Special needs arrangements\n\n2. Results:\n   - Missing results investigation\n   - Supplementary exam registration\n\n3. Certificates:\n   - Replacement (Ksh 2,000)\n   - Collection scheduling\n\nOffice hours: 8:30am-3:30pm, Mon-Fri",
+                        context: 'administration'
+                    };
+                }
+            }
+            
+            // Hostels sub-options
+            if (currentContext === 'hostels') {
+                if (message === "Hostel application") {
+                    return {
+                        text: "Hostel Application Process:\n\n1. Eligibility:\n   - First years guaranteed\n   - Others based on availability\n\n2. Timeline:\n   - Applications open:\n     - Semester 1: 1st July\n     - Semester 2: 1st December\n   - Allocation within 5 working days\n\n3. Requirements:\n   - Clear fee balance\n   - Medical certificate\n   - 2 passport photos",
+                        context: 'hostels'
+                    };
+                }
+                if (message === "Hostel fees") {
+                    return {
+                        text: "Hostel Fee Structure:\n\n- Standard Room (4 students):\n  - Ksh 15,000 per semester\n  - Includes: Bed, wardrobe, study desk\n\n- Premium Room (2 students):\n  - Ksh 25,000 per semester\n  - Includes: Ensuite bathroom, larger space\n\nPayment:\n- 100% upfront with application\n- No refunds after allocation\n- Damage deposit: Ksh 2,000 (refundable)",
+                        context: 'hostels'
+                    };
+                }
+                if (message === "Hostel rules") {
+                    return {
+                        text: "Hostel Regulations:\n\n1. Visitation:\n   - Guests allowed 10am-6pm\n   - Must sign in at reception\n   - No overnight guests\n\n2. Facilities:\n   - Kitchen: 6am-10pm\n   - Laundry: Scheduled days\n   - Quiet hours: 11pm-6am\n\n3. Prohibited:\n   - Cooking appliances\n   - Alcohol/drugs\n   - Pets\n\nViolations may lead to eviction",
+                        context: 'hostels'
+                    };
+                }
+            }
+            
+            // Results sub-options
+            if (currentContext === 'results') {
+                if (message === "Check results") {
+                    return {
+                        text: "Accessing Your Results:\n\nOnline Portal:\n1. Login to student portal\n2. Navigate to 'Academic Records'\n3. Select 'Examination Results'\n4. Choose semester\n\nMobile App:\n1. Download MKU Students App\n2. Login with portal credentials\n3. Tap 'Results' icon\n\nNote:\n- Results released in batches\n- Check regularly if not immediately visible",
+                        context: 'results'
+                    };
+                }
+                if (message === "Missing results") {
+                    return {
+                        text: "Missing Results Procedure:\n\nStep 1: Verification\n- Confirm with classmates\n- Wait 48 hours after batch release\n\nStep 2: Department Inquiry\n- Contact your course coordinator\n- Provide course details\n\nStep 3: Formal Request\n- Collect form at exam office\n- Submit with copy of exam card\n\nProcessing Time:\n- 3-5 working days after submission",
+                        context: 'results'
+                    };
+                }
+                if (message === "Transcripts") {
+                    return {
+                        text: "Transcript Services:\n\n1. Current Students:\n   - Apply via student portal\n   - Processing: 3 working days\n   - Fee: Ksh 500\n\n2. Alumni:\n   - Apply in person/email\n   - Required: ID copy, payment\n   - Processing: 5 working days\n\n3. Urgent Requests:\n   - Available at double fee\n   - 24-hour processing\n\nCollection:\n- In person or courier (extra charge)",
+                        context: 'results'
+                    };
+                }
+            }
+            
+            // General info sub-options
+            if (currentContext === 'general') {
+                if (message === "Library") {
+                    return {
+                        text: "Library Services Overview:\n\nOperating Hours:\n- Weekdays: 8:00am - 8:00pm\n- Saturdays: 9:00am - 4:00pm\n- Closed Sundays & Public Holidays\n\nResources:\n- 50,000+ physical books\n- 100,000+ e-books/journals\n- 50 computer workstations\n\nServices:\n- Research assistance\n- Printing/photocopying\n- Group study rooms\n- Thesis binding",
+                        context: 'general'
+                    };
+                }
+                if (message === "Contacts") {
+                    return {
+                        text: "Key University Contacts:\n\nEmergencies:\n- Security: 0719 173 000\n- Medical: 0722 205 883\n\nAdministration:\n- Main Switchboard: 020 2071 347\n- Registrar: registrar@mku.ac.ke\n- Finance: finance@mku.ac.ke\n\nStudent Services:\n- Helpdesk: helpdesk@mku.ac.ke\n- Counseling: counseling@mku.ac.ke\n- Hostels: accommodation@mku.ac.ke\n\nAll emails answered within 24hrs",
+                        context: 'general'
+                    };
+                }
+                if (message === "Events") {
+                    return {
+                        text: "Upcoming University Events:\n\nAcademic:\n- Career Fair: October 15-17\n- Research Conference: November 5-7\n\nCultural:\n- Cultural Week: November 20-24\n- Talent Show: December 3\n\nSports:\n- Inter-Faculty Games: September 10-12\n- Marathon: December 5\n\nFor more details:\n- Check notice boards\n- Visit events.mku.ac.ke",
+                        context: 'general'
+                    };
+                }
+                if (message === "Facilities") {
+                    return {
+                        text: "Campus Facilities:\n\n1. Academic:\n   - 24/7 Computer Labs\n   - Science Laboratories\n   - Auditoriums\n\n2. Recreational:\n   - Sports Complex\n   - Gymnasium\n   - Swimming Pool\n\n3. Services:\n   - Health Center\n   - Cafeteria\n   - Banking Hall\n\nAccess:\n- Most facilities open 7am-10pm\n- Student ID required for entry",
+                        context: 'general'
+                    };
+                }
+            }
+            
+            // Back to main menu
+            if (lowerMessage.includes('back') || lowerMessage.includes('main menu') || 
+                lowerMessage.includes('start over')) {
+                currentContext = null;
+                localStorage.removeItem('mkuchatbot_context');
+                return {
+                    text: "Returning to main menu. How can I help you?",
+                    context: null
+                };
+            }
+            
+            // Default response
+            return {
+                text: "I'm sorry, I didn't understand that. Could you please rephrase or choose from these options?",
+                context: currentContext
+            };
+        }
+
+        // Get context-specific options
+        function getContextOptions(context) {
+            switch (context) {
+                case 'fees':
+                    return ["Fee payment methods", "Fee deadlines", "Fee balances", "Back to main menu"];
+                case 'administration':
+                    return ["Academic records", "Student welfare", "Finance office", "Examination office", "Back to main menu"];
+                case 'hostels':
+                    return ["Hostel application", "Hostel fees", "Hostel rules", "Back to main menu"];
+                case 'results':
+                    return ["Check results", "Missing results", "Transcripts", "Back to main menu"];
+                case 'general':
+                    return ["Library", "Contacts", "Events", "Facilities", "Back to main menu"];
+                default:
+                    return [
+                        "Fees Information",
+                        "Administration",
+                        "Hostels",
+                        "Results",
+                        "General Information"
+                    ];
+            }
+        }
+        
+        // Event listeners
+        chatbotIcon.addEventListener('click', () => {
+            chatbotContainer.style.display = 'block';
+            chatbotIcon.style.display = 'none';
+            showContinueOptions();
+        });
+        
+        chatbotClose.addEventListener('click', () => {
+            chatbotContainer.style.display = 'none';
+            chatbotIcon.style.display = 'flex';
+        });
+        
+        sendButton.addEventListener('click', handleUserInput);
+        
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleUserInput();
+            }
+        });
+    </script>
+</body>
+</html>
